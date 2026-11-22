@@ -1,0 +1,11 @@
+{
+  "name": "Droid Deck Loader",
+  "author": "lcilia",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": ["proton", "turnip", "drivers"],
+    "description": "Install and update DroidDeck Proton and DroidDeck Turnip from GitHub releases.",
+    "image": ""
+  }
+}
