@@ -1,5 +1,7 @@
 # Droid Deck Loader
 
+<img src="assets/icon.png" alt="" width="96">
+
 Decky plugin that installs and updates DroidDeck Proton and DroidDeck Turnip from GitHub releases.
 
 | Component | Source | Installed to |

@@ -6,6 +6,6 @@
   "publish": {
     "tags": ["proton", "turnip", "drivers"],
     "description": "Install and update DroidDeck Proton and DroidDeck Turnip from GitHub releases.",
-    "image": ""
+    "image": "https://raw.githubusercontent.com/evoluketion/droid-deck-loader/main/assets/icon.png"
   }
 }

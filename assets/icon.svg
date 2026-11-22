@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34d17f"/>
+      <stop offset="1" stop-color="#0b7a64"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- handheld body -->
+  <rect x="64" y="220" width="384" height="200" rx="72" fill="#ffffff"/>
+  <!-- screen -->
+  <rect x="160" y="248" width="192" height="144" rx="18" fill="#0d3b33"/>
+  <!-- d-pad -->
+  <rect x="94" y="306" width="48" height="16" rx="5" fill="#0d3b33"/>
+  <rect x="110" y="290" width="16" height="48" rx="5" fill="#0d3b33"/>
+  <!-- face buttons -->
+  <circle cx="392" cy="298" r="11" fill="#0d3b33"/>
+  <circle cx="404" cy="334" r="11" fill="#0d3b33"/>
+  <!-- download arrow into the screen -->
+  <path d="M256 72 V318" stroke="#ffffff" stroke-width="36" stroke-linecap="round" fill="none"/>
+  <path d="M184 252 L256 324 L328 252" stroke="#34d17f" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M256 220 V318" stroke="#34d17f" stroke-width="36" stroke-linecap="round" fill="none"/>
+</svg>
