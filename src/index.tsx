@@ -234,6 +234,11 @@ export default definePlugin(() => {
     }
   });
 
+  const onUpdate = addEventListener<[ComponentKey, string]>("dd_update_available", (key, latest) => {
+    const label = key === "proton" ? "DroidDeck Proton" : "DroidDeck Turnip";
+    toaster.toast({ title: `${label} ${latest} available`, body: "Open Droid Deck Loader to install it" });
+  });
+
   return {
     name: "Droid Deck Loader",
     titleView: <div className={staticClasses.Title}>Droid Deck Loader</div>,
@@ -248,6 +253,7 @@ export default definePlugin(() => {
     ),
     onDismount() {
       removeEventListener("dd_progress", onProgress);
+      removeEventListener("dd_update_available", onUpdate);
     },
   };
 });
