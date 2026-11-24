@@ -5,7 +5,7 @@ import {
   Field,
   PanelSection,
   PanelSectionRow,
-  ProgressBarWithInfo,
+  ProgressBar,
   ToggleField,
   showModal,
   staticClasses,
@@ -83,16 +83,18 @@ function ComponentSection({
       {active ? (
         <>
           <PanelSectionRow>
-            <ProgressBarWithInfo
-              indeterminate={progress!.stage !== "downloading" || !progress!.total}
-              nProgress={progress!.total ? (progress!.done / progress!.total) * 100 : 0}
-              sOperationText={STAGE_TEXT[progress!.stage]}
-              sTimeRemaining={
-                progress!.stage === "downloading" && progress!.total
-                  ? `${mb(progress!.done)} / ${mb(progress!.total)}`
-                  : undefined
-              }
-            />
+            <div style={{ width: "100%" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
+                <span>{STAGE_TEXT[progress!.stage]}</span>
+                {progress!.stage === "downloading" && progress!.total ? (
+                  <span>{`${mb(progress!.done)} / ${mb(progress!.total)}`}</span>
+                ) : null}
+              </div>
+              <ProgressBar
+                indeterminate={progress!.stage !== "downloading" || !progress!.total}
+                nProgress={progress!.total ? (progress!.done / progress!.total) * 100 : 0}
+              />
+            </div>
           </PanelSectionRow>
           <PanelSectionRow>
             <ButtonItem
