@@ -30,6 +30,19 @@ let lastCheck = 0;
 
 const mb = (bytes: number) => `${(bytes / 1048576).toFixed(0)} MB`;
 
+// Steam only reads compatibilitytools.d at startup
+function promptSteamRestart(title: string, reason: string) {
+  showModal(
+    <ConfirmModal
+      strTitle={title}
+      strDescription={`${reason} Restarting closes any running game.`}
+      strOKButtonText="Restart Steam"
+      strCancelButtonText="Later"
+      onOK={() => SteamClient.User.StartRestart(false)}
+    />,
+  );
+}
+
 const STAGE_TEXT: Record<Progress["stage"], string> = {
   downloading: "Downloading",
   verifying: "Verifying checksum",
@@ -131,12 +144,20 @@ function ComponentSection({
                   strTitle="Remove old Proton versions?"
                   strDescription={
                     `This deletes ${old.map((i) => i.name).join(", ")}. ` +
-                    "Games set to one of these will need a different compatibility tool. " +
-                    "Restart Steam afterwards."
+                    "Games set to one of these will need a different compatibility tool."
                   }
                   strOKButtonText="Remove"
                   bDestructiveWarning
-                  onOK={async () => onState(await removeOldVersions(state.key))}
+                  onOK={async () => {
+                    const next = await removeOldVersions(state.key);
+                    onState(next);
+                    if (next[state.key].installed.length < state.installed.length) {
+                      promptSteamRestart(
+                        "Old Proton versions removed",
+                        "Steam needs to restart to drop them from the compatibility tool list.",
+                      );
+                    }
+                  }}
                 />,
               )
             }
@@ -219,15 +240,18 @@ function Content() {
 }
 
 export default definePlugin(() => {
-  // toasts live here so they still fire when the panel is closed mid-install
+  // toasts and prompts live here so they still fire when the panel is closed mid-install
   const onProgress = addEventListener<[ComponentKey, Progress]>("dd_progress", (key, p) => {
     const label = key === "proton" ? "DroidDeck Proton" : "DroidDeck Turnip";
-    if (p.stage === "done") {
+    if (p.stage === "done" && key === "proton") {
+      promptSteamRestart(
+        `${label} installed`,
+        "Steam needs to restart before it shows up in the compatibility tool list.",
+      );
+    } else if (p.stage === "done") {
       toaster.toast({
         title: `${label} installed`,
-        body: key === "proton"
-          ? "Restart Steam to see it in the compatibility tool list"
-          : "Pick it under Drivers in Armada Control's Compatibility tab",
+        body: "Pick it under Drivers in Armada Control's Compatibility tab",
       });
     } else if (p.stage === "error") {
       toaster.toast({ title: `${label} install failed`, body: "Open Droid Deck Loader for details" });
