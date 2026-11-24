@@ -29,6 +29,8 @@ WORK_DIR = Path(decky.DECKY_PLUGIN_RUNTIME_DIR) / "work"
 API = "https://api.github.com/repos/{repo}/releases?per_page=30"
 HEADERS = {"Accept": "application/vnd.github+json", "User-Agent": "droid-deck-loader"}
 CHUNK = 1 << 20
+CHECK_INTERVAL = 6 * 60 * 60
+TICK = 60
 
 
 def _ssl_context():
@@ -52,18 +54,23 @@ class Plugin:
         self.progress = {}
         self.cancel = set()
         self.ssl = _ssl_context()
+        self.last_check = 0.0
         shutil.rmtree(WORK_DIR, ignore_errors=True)
+        self.background = asyncio.get_running_loop().create_task(self._background())
 
     async def _unload(self):
+        self.background.cancel()
         for task in self.jobs.values():
             task.cancel()
 
     def _load_settings(self):
-        defaults = {"allow_prerelease": {key: False for key in COMPONENTS}}
+        defaults = {"allow_prerelease": {key: False for key in COMPONENTS}, "notified": {}}
         try:
             data = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
             defaults["allow_prerelease"].update(
                 {k: bool(v) for k, v in data.get("allow_prerelease", {}).items() if k in COMPONENTS})
+            defaults["notified"].update(
+                {k: str(v) for k, v in data.get("notified", {}).items() if k in COMPONENTS})
         except (OSError, ValueError, AttributeError):
             pass
         return defaults
@@ -107,8 +114,45 @@ class Plugin:
         return await self.get_state()
 
     async def check_updates(self):
-        await asyncio.gather(*(self._check(key) for key in COMPONENTS))
+        await self._check_all()
         return await self.get_state()
+
+    async def _check_all(self):
+        results = await asyncio.gather(*(self._check(key) for key in COMPONENTS))
+        if all(results):
+            self.last_check = time.time()
+        return all(results)
+
+    async def _background(self):
+        # time.time() rather than asyncio's monotonic clock so time spent asleep counts.
+        # last_check only moves on success, so a failed check (e.g. no Wi-Fi) retries next tick
+        while True:
+            try:
+                if time.time() - self.last_check >= CHECK_INTERVAL and await self._check_all():
+                    await self._notify_updates()
+                    for key in COMPONENTS:
+                        await decky.emit("dd_state_changed", key)
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                decky.logger.error(f"background update check failed: {exc}")
+            await asyncio.sleep(TICK)
+
+    async def _notify_updates(self):
+        state = await self.get_state()
+        changed = False
+        for key, s in state.items():
+            # only for components already installed, so nobody gets nagged about one they skipped
+            if not s["current"] or not s["update_available"] or s["latest_installed"]:
+                continue
+            version = s["latest"]["version"]
+            if self.settings["notified"].get(key) == version:
+                continue
+            self.settings["notified"][key] = version
+            changed = True
+            await decky.emit("dd_update_available", key, version)
+        if changed:
+            await asyncio.to_thread(self._save_settings)
 
     async def _check(self, key):
         component = COMPONENTS[key]
@@ -123,9 +167,11 @@ class Plugin:
             latest = pick_release(component, releases, self.settings["allow_prerelease"][key])
             self.latest[key] = latest
             self.errors[key] = None if latest else "No matching release found"
+            return True
         except Exception as exc:
             decky.logger.warning(f"update check for {key} failed: {exc}")
             self.errors[key] = f"Update check failed: {exc}"
+            return False
 
     async def install(self, key):
         if key in self.jobs:
