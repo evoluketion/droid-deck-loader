@@ -11,6 +11,7 @@ import {
   staticClasses,
 } from "@decky/ui";
 import { useCallback, useEffect, useState } from "react";
+import { version } from "../package.json";
 import {
   ComponentKey,
   ComponentState,
@@ -210,6 +211,9 @@ function Content() {
       {(["proton", "turnip"] as ComponentKey[]).map((key) => (
         <ComponentSection key={key} state={state[key]} progress={progress[key] ?? null} onState={applyState} />
       ))}
+      <PanelSection>
+        <div style={{ textAlign: "center", fontSize: "12px", opacity: 0.6 }}>Droid Deck Loader v{version}</div>
+      </PanelSection>
     </>
   );
 }
